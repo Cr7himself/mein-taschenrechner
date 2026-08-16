@@ -15,13 +15,11 @@
 
         body {
             min-height: 100vh;
-
             display: flex;
             justify-content: center;
             align-items: center;
 
             font-family: Arial, Helvetica, sans-serif;
-
             background: #000;
         }
 
@@ -37,23 +35,20 @@
         .calculator {
             width: 360px;
             padding: 20px;
-
             background: #000;
         }
 
         .title {
             color: white;
             text-align: center;
-
             font-size: 20px;
             font-weight: 500;
-
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         .display {
             width: 100%;
-            height: 120px;
+            height: 130px;
 
             padding: 10px;
 
@@ -63,7 +58,7 @@
             background: transparent;
             color: white;
 
-            font-size: 64px;
+            font-size: 48px;
             font-weight: 300;
 
             text-align: right;
@@ -71,9 +66,7 @@
 
         .buttons {
             display: grid;
-
             grid-template-columns: repeat(4, 1fr);
-
             gap: 12px;
         }
 
@@ -84,7 +77,7 @@
             border: none;
             border-radius: 50%;
 
-            background: #333333;
+            background: #333;
             color: white;
 
             font-size: 28px;
@@ -113,11 +106,6 @@
             color: white;
         }
 
-        .operator.active {
-            background: white;
-            color: #ff9f0a;
-        }
-
         .equals {
             background: #ff9f0a;
             color: white;
@@ -126,7 +114,6 @@
         .zero {
             width: 156px;
             border-radius: 36px;
-
             grid-column: span 2;
 
             text-align: left;
@@ -134,7 +121,6 @@
         }
 
         @media (max-width: 400px) {
-
             .calculator {
                 width: 100%;
                 padding: 15px;
@@ -207,136 +193,194 @@
 
         let firstNumber = "";
         let operator = "";
-        let waitingForSecondNumber = false;
+        let currentNumber = "0";
+        let calculationFinished = false;
+
+
+        function updateDisplay() {
+
+            const display = document.getElementById("display");
+
+            if (operator !== "") {
+                display.value =
+                    firstNumber + " " + getOperatorSymbol(operator) + " " + currentNumber;
+            }
+            else {
+                display.value = currentNumber;
+            }
+        }
+
+
+        function getOperatorSymbol(operator) {
+
+            if (operator === "*") {
+                return "×";
+            }
+
+            if (operator === "/") {
+                return "÷";
+            }
+
+            if (operator === "-") {
+                return "−";
+            }
+
+            if (operator === "+") {
+                return "+";
+            }
+
+            return operator;
+        }
 
 
         function addNumber(number) {
 
-            const display = document.getElementById("display");
+            if (calculationFinished) {
 
-            if (waitingForSecondNumber) {
+                currentNumber = number;
+                firstNumber = "";
+                operator = "";
 
-                display.value = number;
-
-                waitingForSecondNumber = false;
+                calculationFinished = false;
 
             }
-            else if (display.value === "0") {
+            else if (currentNumber === "0" && number !== ".") {
 
-                display.value = number;
+                currentNumber = number;
+
+            }
+            else if (number === "." && currentNumber.includes(".")) {
+
+                return;
 
             }
             else {
 
-                display.value = display.value + number;
+                currentNumber += number;
 
             }
+
+            updateDisplay();
         }
 
 
         function chooseOperator(selectedOperator) {
 
-            const display = document.getElementById("display");
+            if (operator !== "" && currentNumber !== "") {
 
-            firstNumber = Number(display.value);
+                calculate(false);
+            }
 
+            firstNumber = currentNumber;
             operator = selectedOperator;
+            currentNumber = "0";
 
-            waitingForSecondNumber = true;
+            calculationFinished = false;
+
+            updateDisplay();
         }
 
 
-        function calculate() {
+        function calculate(showResult = true) {
 
-            const display = document.getElementById("display");
+            if (operator === "") {
+                return;
+            }
 
-            const secondNumber = Number(display.value);
+            const number1 = Number(firstNumber);
+            const number2 = Number(currentNumber);
 
             let result;
 
 
             if (operator === "+") {
 
-                result = firstNumber + secondNumber;
+                result = number1 + number2;
 
             }
             else if (operator === "-") {
 
-                result = firstNumber - secondNumber;
+                result = number1 - number2;
 
             }
             else if (operator === "*") {
 
-                result = firstNumber * secondNumber;
+                result = number1 * number2;
 
             }
             else if (operator === "/") {
 
-                if (secondNumber === 0) {
+                if (number2 === 0) {
 
-                    display.value = "Fehler";
+                    currentNumber = "Fehler";
+                    firstNumber = "";
+                    operator = "";
+
+                    updateDisplay();
 
                     return;
                 }
 
-                result = firstNumber / secondNumber;
-
-            }
-            else {
-
-                return;
+                result = number1 / number2;
             }
 
 
-            display.value = result;
-
+            currentNumber = String(result);
             firstNumber = "";
             operator = "";
 
-            waitingForSecondNumber = true;
+            if (showResult) {
+
+                calculationFinished = true;
+
+            }
+
+            updateDisplay();
         }
 
 
         function calculatePercent() {
 
-            const display = document.getElementById("display");
+            const number = Number(currentNumber);
 
-            const number = Number(display.value);
+            currentNumber = String(number / 100);
 
-            display.value = number / 100;
-
-            waitingForSecondNumber = true;
+            updateDisplay();
         }
 
 
         function clearCalculator() {
 
-            const display = document.getElementById("display");
-
-            display.value = "0";
-
             firstNumber = "";
             operator = "";
+            currentNumber = "0";
+            calculationFinished = false;
 
-            waitingForSecondNumber = false;
+            updateDisplay();
         }
 
 
         function deleteNumber() {
 
-            const display = document.getElementById("display");
+            if (calculationFinished) {
 
-            if (display.value.length > 1) {
+                clearCalculator();
+                return;
+            }
 
-                display.value =
-                    display.value.slice(0, -1);
+            if (currentNumber.length > 1) {
+
+                currentNumber =
+                    currentNumber.slice(0, -1);
 
             }
             else {
 
-                display.value = "0";
+                currentNumber = "0";
 
             }
+
+            updateDisplay();
         }
 
     </script>
