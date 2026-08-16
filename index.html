@@ -15,11 +15,14 @@
 
         body {
             min-height: 100vh;
+
             display: flex;
             justify-content: center;
             align-items: center;
 
-            font-family: Arial, Helvetica, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont,
+                         "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+
             background: #000;
         }
 
@@ -35,30 +38,37 @@
         .calculator {
             width: 360px;
             padding: 20px;
+
             background: #000;
         }
 
         .display {
             width: 100%;
-            height: 130px;
+            height: 145px;
 
-            padding: 10px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: flex-end;
 
-            border: none;
-            outline: none;
+            padding: 10px 5px 20px;
 
-            background: transparent;
             color: white;
 
-            font-size: 48px;
+            font-size: 64px;
             font-weight: 300;
+
+            white-space: nowrap;
+
+            overflow: hidden;
 
             text-align: right;
         }
 
         .buttons {
             display: grid;
+
             grid-template-columns: repeat(4, 1fr);
+
             gap: 12px;
         }
 
@@ -105,14 +115,18 @@
 
         .zero {
             width: 156px;
+
             border-radius: 36px;
+
             grid-column: span 2;
 
             text-align: left;
+
             padding-left: 28px;
         }
 
         @media (max-width: 400px) {
+
             .calculator {
                 width: 100%;
                 padding: 15px;
@@ -138,13 +152,7 @@
 
     <div class="calculator">
 
-        <input
-            type="text"
-            id="display"
-            class="display"
-            value="0"
-            readonly
-        >
+        <div id="display" class="display">0</div>
 
         <div class="buttons">
 
@@ -181,36 +189,156 @@
 
         let firstNumber = "";
         let operator = "";
-        let currentNumber = "";
+        let currentNumber = "0";
         let calculationFinished = false;
 
 
+        /*
+            DAS DISPLAY AKTUALISIEREN
+        */
+
         function updateDisplay() {
 
-            const display = document.getElementById("display");
+            const display =
+                document.getElementById("display");
+
+            let text = "";
+
 
             if (operator !== "") {
 
                 if (currentNumber === "") {
-                    display.value =
-                        firstNumber + " " + getOperatorSymbol(operator);
-                }
-                else {
-                    display.value =
-                        firstNumber + " " +
+
+                    text =
+                        firstNumber +
+                        " " +
+                        getOperatorSymbol(operator);
+
+                } else {
+
+                    text =
+                        firstNumber +
+                        " " +
                         getOperatorSymbol(operator) +
                         " " +
                         currentNumber;
                 }
 
-            }
-            else {
+            } else {
 
-                display.value = currentNumber || "0";
-
+                text = currentNumber;
             }
+
+
+            display.textContent = text;
+
+
+            /*
+                SCHRIFTGRÖSSE BERECHNEN
+            */
+
+            fitTextToDisplay();
         }
 
+
+        /*
+            DIESE FUNKTION IST FÜR
+            DAS PROBLEM VERANTWORTLICH
+        */
+
+        function fitTextToDisplay() {
+
+            const display =
+                document.getElementById("display");
+
+            const text =
+                display.textContent;
+
+
+            /*
+                Verfügbare Breite
+            */
+
+            const availableWidth =
+                display.clientWidth - 10;
+
+
+            /*
+                Canvas zum Messen
+                der echten Textbreite
+            */
+
+            const canvas =
+                document.createElement("canvas");
+
+            const context =
+                canvas.getContext("2d");
+
+
+            /*
+                Startgröße
+            */
+
+            let fontSize = 64;
+
+
+            /*
+                Schriftart exakt wie
+                beim Display
+            */
+
+            context.font =
+                "300 " +
+                fontSize +
+                "px -apple-system, BlinkMacSystemFont, " +
+                "\"SF Pro Display\", \"Helvetica Neue\", Arial";
+
+
+            /*
+                Textbreite messen
+            */
+
+            let textWidth =
+                context.measureText(text).width;
+
+
+            /*
+                Solange der Text zu breit ist,
+                Schrift kleiner machen
+            */
+
+            while (
+                textWidth > availableWidth &&
+                fontSize > 18
+            ) {
+
+                fontSize -= 1;
+
+
+                context.font =
+                    "300 " +
+                    fontSize +
+                    "px -apple-system, BlinkMacSystemFont, " +
+                    "\"SF Pro Display\", \"Helvetica Neue\", Arial";
+
+
+                textWidth =
+                    context.measureText(text).width;
+            }
+
+
+            /*
+                Ergebnis anwenden
+            */
+
+            display.style.fontSize =
+                fontSize + "px";
+        }
+
+
+        /*
+            RECHENZEICHEN
+        */
 
         function getOperatorSymbol(operator) {
 
@@ -234,91 +362,135 @@
         }
 
 
+        /*
+            ZAHL EINGEBEN
+        */
+
         function addNumber(number) {
 
             if (calculationFinished) {
 
                 currentNumber = number;
+
                 firstNumber = "";
                 operator = "";
 
                 calculationFinished = false;
 
             }
-            else if (currentNumber === "" && number !== ".") {
+
+            else if (
+                currentNumber === "0" &&
+                number !== "."
+            ) {
 
                 currentNumber = number;
 
             }
-            else if (currentNumber === "0" && number !== ".") {
 
-                currentNumber = number;
-
-            }
-            else if (number === "." && currentNumber.includes(".")) {
+            else if (
+                number === "." &&
+                currentNumber.includes(".")
+            ) {
 
                 return;
 
             }
+
             else {
 
                 currentNumber += number;
-
             }
+
 
             updateDisplay();
         }
 
+
+        /*
+            OPERATOR
+        */
 
         function chooseOperator(selectedOperator) {
 
-            if (operator !== "" && currentNumber !== "") {
+            if (
+                operator !== "" &&
+                currentNumber !== ""
+            ) {
+
                 calculate(false);
             }
 
-            firstNumber = currentNumber;
-            operator = selectedOperator;
 
-            currentNumber = "";
+            firstNumber =
+                currentNumber;
 
-            calculationFinished = false;
+            operator =
+                selectedOperator;
+
+            currentNumber =
+                "";
+
+            calculationFinished =
+                false;
+
 
             updateDisplay();
         }
 
 
+        /*
+            BERECHNEN
+        */
+
         function calculate(showResult = true) {
 
-            if (operator === "" || currentNumber === "") {
+            if (
+                operator === "" ||
+                currentNumber === ""
+            ) {
+
                 return;
             }
 
-            const number1 = Number(firstNumber);
-            const number2 = Number(currentNumber);
+
+            const number1 =
+                Number(firstNumber);
+
+            const number2 =
+                Number(currentNumber);
 
             let result;
 
 
             if (operator === "+") {
 
-                result = number1 + number2;
+                result =
+                    number1 + number2;
 
             }
+
             else if (operator === "-") {
 
-                result = number1 - number2;
+                result =
+                    number1 - number2;
 
             }
+
             else if (operator === "*") {
 
-                result = number1 * number2;
+                result =
+                    number1 * number2;
 
             }
+
             else if (operator === "/") {
 
                 if (number2 === 0) {
 
-                    currentNumber = "Fehler";
+                    currentNumber =
+                        "Fehler";
+
                     firstNumber = "";
                     operator = "";
 
@@ -327,22 +499,32 @@
                     return;
                 }
 
-                result = number1 / number2;
+                result =
+                    number1 / number2;
             }
 
 
-            currentNumber = String(result);
+            currentNumber =
+                String(result);
 
             firstNumber = "";
             operator = "";
 
+
             if (showResult) {
-                calculationFinished = true;
+
+                calculationFinished =
+                    true;
             }
+
 
             updateDisplay();
         }
 
+
+        /*
+            PROZENT
+        */
 
         function calculatePercent() {
 
@@ -350,48 +532,85 @@
                 return;
             }
 
-            const number = Number(currentNumber);
 
-            currentNumber = String(number / 100);
+            const number =
+                Number(currentNumber);
+
+
+            currentNumber =
+                String(number / 100);
+
 
             updateDisplay();
         }
 
+
+        /*
+            ALLES LÖSCHEN
+        */
 
         function clearCalculator() {
 
             firstNumber = "";
             operator = "";
-            currentNumber = "";
 
-            calculationFinished = false;
+            currentNumber =
+                "0";
+
+            calculationFinished =
+                false;
+
 
             updateDisplay();
         }
 
+
+        /*
+            LETZTE ZIFFER LÖSCHEN
+        */
 
         function deleteNumber() {
 
             if (calculationFinished) {
 
                 clearCalculator();
+
                 return;
             }
 
-            if (currentNumber.length > 1) {
+
+            if (
+                currentNumber.length > 1
+            ) {
 
                 currentNumber =
                     currentNumber.slice(0, -1);
 
             }
+
             else {
 
-                currentNumber = "";
-
+                currentNumber =
+                    "0";
             }
+
 
             updateDisplay();
         }
+
+
+        /*
+            AUCH BEI FENSTERÄNDERUNG
+            NEU ANPASSEN
+        */
+
+        window.addEventListener(
+            "resize",
+            updateDisplay
+        );
+
+
+        updateDisplay();
 
     </script>
 
